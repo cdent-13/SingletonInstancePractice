@@ -7,16 +7,11 @@ namespace Singleton
     {
         static void Main(string[] args)
         {
-            Dictionary<string, Object> _settings;
-           
-
-           
-
 
         }
     }
 
-    public sealed class ConfigManager()
+    public sealed class ConfigManager
     {
         private static ConfigManager _instance;
         private static readonly object _instanceLock = new object();
@@ -32,8 +27,9 @@ namespace Singleton
         {
             get
             {
-                lock (_instance)
+                lock (_instanceLock)
                 {
+                    if (_instance == null) return new ConfigManager();
                     return _instance;
                 }
             }
@@ -42,14 +38,27 @@ namespace Singleton
         
         private void LoadFromJson()
         {
-            using StreamReader reader = new("./Assets/settings.json");
+            try
+            {
+                using StreamReader reader = new("./Assets/settings.json");
 
-            string text = reader.ReadToEnd();
+                string text = reader.ReadToEnd();
 
-            _json = JsonSerializer.Deserialize<Dictionary<string, object>>(text);
+                _json = JsonSerializer.Deserialize<Dictionary<string, object>>(text);
 
-            FlattenDictionary(_json);
+                FlattenDictionary(_json);
+            }catch(FileNotFoundException e)
+            {
+                Console.WriteLine("File Not Found.");
+                return;
+            }
         }
+
+        private void SaveToJson()
+        {
+
+        }
+
         private void FlattenDictionary(Dictionary<string, object> source, string prefix = "")
         {
             foreach (var kvp in source)
@@ -65,7 +74,13 @@ namespace Singleton
             }
         }
 
-        public string 
+        public string GetString(string key)
+        {
+            if (_settings.ContainsKey(key))
+                return _settings[key].ToString();
+
+            return "Key Not Found.";
+        }
     }
 
 }
