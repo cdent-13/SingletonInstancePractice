@@ -52,11 +52,20 @@ namespace Singleton
                 Console.WriteLine("File Not Found.");
                 return;
             }
+            catch (JsonException)
+            {
+                Console.WriteLine("Json Exception");
+            }
         }
 
         private void SaveToJson()
         {
+            lock (_instanceLock) 
+            {
+                string json = JsonSerializer.Serialize(_settings);
 
+                File.WriteAllText("./Assets/settings.json", json);
+            }
         }
 
         private void FlattenDictionary(Dictionary<string, object> source, string prefix = "")
@@ -76,10 +85,31 @@ namespace Singleton
 
         public string GetString(string key)
         {
-            if (_settings.ContainsKey(key))
-                return _settings[key].ToString();
+            lock (_instanceLock)
+            {
+                if (_settings.ContainsKey(key))
+                    return _settings[key].ToString();
 
-            return "Key Not Found.";
+                return "Key Not Found.";
+            }
+        }
+
+        public void SetString(string key, string value)
+        {
+            lock (_instanceLock)
+            {
+                _settings[key] = value;
+                SaveToJson();
+            }
+        }
+
+        public bool TryGetString (string key, out string value)
+        {
+            value = "";
+
+            if (!_settings.ContainsKey(key))
+                return false;
+            return true;
         }
     }
 
